@@ -108,6 +108,39 @@ queryParser = do
         exprParser)
     return (Query cols table wherePart)
 
+-- Función para convertir una consulta desglosada a formato DOT
+toDot :: Query -> String
+toDot (Query fields table whereExpr) =
+    unlines (
+        ["digraph Query {",
+         "  node [shape=box];",
+         "  Query -> Table [label=\"FROM\"];",
+         "  Table [label=\"" ++ table ++ "\"];"]
+        ++ map (\f -> "  Query -> " ++ f ++ " [label=\"SELECT\"];") fields
+        ++ whereDot whereExpr
+        ++ ["}"])
+  where
+    whereDot Nothing = []
+    whereDot (Just expr) = ["  Query -> Where [label=\"WHERE\"];"] ++ exprToDot "Where" expr
+
+    exprToDot parent (Cond (Condition col op val)) =
+        ["  " ++ parent ++ " -> Cond_" ++ col ++ " [label=\"" ++ col ++ " " ++ show op ++ " " ++ val ++ "\"];"]
+
+    exprToDot parent (And l r) =
+        let andNode = parent ++ "_AND"
+        in  ["  " ++ parent ++ " -> " ++ andNode ++ " [label=\"AND\"];", 
+             "  " ++ andNode ++ " [shape=ellipse];"]
+            ++ exprToDot andNode l
+            ++ exprToDot andNode r
+
+    exprToDot parent (Or l r) =
+        let orNode = parent ++ "_OR"
+        in  ["  " ++ parent ++ " -> " ++ orNode ++ " [label=\"OR\"];", 
+             "  " ++ orNode ++ " [shape=ellipse];"]
+            ++ exprToDot orNode l
+            ++ exprToDot orNode r
+
+
 -- Función principal de prueba
 main :: IO ()
 main = parseTest queryParser "SELECT nombre, edad FROM usuarios WHERE edad > 30 AND ciudad = Madrid"
