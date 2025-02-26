@@ -1,7 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 import Text.ParserCombinators.Parsec
-import Text.ParserCombinators.Parsec.Prim (Parser)
 
 -- Definición de los operadores de comparación
 -- Eq  -> Igual (=)
@@ -81,7 +78,7 @@ reserved word = do
 -- Ejemplo: SELECT nombre, edad
 columnsParser :: Parser [String]
 columnsParser = do
-    cols <- sepBy1 (many1 letter) (do
+    cols <- sepBy1 (many1 letter <|> string "*") (do
         char ','
         spaces)
     spaces -- Se asegura de consumir los espacios antes de "FROM"
