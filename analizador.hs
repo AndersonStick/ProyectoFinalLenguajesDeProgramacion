@@ -1,3 +1,5 @@
+module Analizador where
+
 import Text.ParserCombinators.Parsec
 
 -- Definición de los operadores de comparación
@@ -55,17 +57,26 @@ conditionParser = do
     spaces -- Captura el valor
     return (Condition col op val)
 
--- Parser para expresiones WHERE con soporte para AND y OR
+-- Parser para expresiones WHERE con precedencia correcta: AND > OR
 exprParser :: Parser Expr
-exprParser = chainl1 term (do
+exprParser = orExpr
+
+-- OR tiene menor prioridad, por lo que es la estructura de nivel superior
+orExpr :: Parser Expr
+orExpr = chainl1 andExpr (try (string "OR") >> spaces >> return Or)
+
+-- AND tiene mayor prioridad, por lo que se evalúa primero
+andExpr :: Parser Expr
+andExpr = chainl1 term (try (string "AND") >> spaces >> return And)
+
+-- Un término es una condición simple o una expresión entre paréntesis
+term :: Parser Expr
+term = do
     spaces
-    op <- (string "AND" >> return And) <|> (string "OR" >> return Or)
+    cond <- conditionParser
     spaces
-    return op)
-  where
-    term = do
-        cond <- conditionParser
-        return (Cond cond)  -- Convierte una condición en una expresión
+    return (Cond cond)
+    <|> between (char '(' >> spaces) (spaces >> char ')') exprParser
 
 -- Parser para palabras clave SQL como SELECT, FROM, WHERE
 reserved :: String -> Parser String
@@ -140,4 +151,4 @@ toDot (Query fields table whereExpr) =
 
 -- Función principal de prueba
 main :: IO ()
-main = parseTest queryParser "SELECT nombre, edad FROM usuarios WHERE edad > 30 AND ciudad = Madrid"
+main = parseTest queryParser "SELECT nombre FROM empleados WHERE edad > 25 AND departamento = Ventas OR salario > 5000 AND experiencia >= 5;"
