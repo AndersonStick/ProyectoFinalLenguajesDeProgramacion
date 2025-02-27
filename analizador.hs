@@ -2,7 +2,7 @@ module Analizador where
 
 import Text.ParserCombinators.Parsec
 
--- Definición de los operadores de comparación
+-- | Definición de los operadores de comparación usados en la cláusula WHERE
 -- Eq  -> Igual (=)
 -- Gt  -> Mayor que (>).
 -- Lt  -> Menor que (<).
@@ -12,29 +12,29 @@ import Text.ParserCombinators.Parsec
 data Operator = Eq | Gt | Lt | Ge | Le | Ne
     deriving (Show, Eq)
 
--- Representa una condición en la cláusula WHERE
+-- | Representa una condición en la cláusula WHERE
 -- Ejemplo: edad > 30
 data Condition = Condition {
-    column   :: String,
-    operator :: Operator,
-    value    :: String
+    column   :: String,   -- Nombre de la columna
+    operator :: Operator, -- Operador de comparación
+    value    :: String    -- Valor de la condición
 } deriving (Show, Eq)
 
--- Representa expresiones lógicas en WHERE (AND, OR)
+-- | Representa expresiones lógicas en WHERE con operadores AND y OR
 data Expr
     = Cond Condition        -- Expresión simple con una condición
     | And Expr Expr         -- Expresión con AND
     | Or Expr Expr          -- Expresión con OR
     deriving (Show, Eq)
 
--- Representa una consulta completa SQL-like
+-- | Representa una consulta SQL simplificada con SELECT, FROM y WHERE opcional
 data Query = Query {
     selectFields :: [String],  -- Lista de columnas seleccionadas
-    fromTable    :: String,    -- Tabla de la consulta
+    fromTable    :: String,    -- Nombre de la tabla consultada
     whereClause  :: Maybe Expr -- Condición opcional en WHERE
 } deriving (Show, Eq)
 
--- Parser para los operadores de comparación
+-- | Parser para los operadores de comparación
 operatorParser :: Parser Operator
 operatorParser = choice
     [ try (string "=")  >> return Eq
@@ -45,31 +45,30 @@ operatorParser = choice
     , try (string "<")  >> return Lt
     ]
 
--- Parser para una condición individual (columna operador valor)
--- Ejemplo: edad > 30
+-- | Parser para una condición individual (columna operador valor)
 conditionParser :: Parser Condition
 conditionParser = do
-    col <- many1 letter
-    spaces   -- Captura el nombre de la columna
-    op <- operatorParser
-    spaces  -- Captura el operador
-    val <- many1 (letter <|> digit)
-    spaces -- Captura el valor
+    col <- many1 letter  -- Captura el nombre de la columna
+    spaces
+    op <- operatorParser -- Captura el operador
+    spaces
+    val <- many1 (letter <|> digit) -- Captura el valor
+    spaces
     return (Condition col op val)
 
--- Parser para expresiones WHERE con precedencia correcta: AND > OR
+-- | Parser para expresiones WHERE con precedencia correcta: AND > OR
 exprParser :: Parser Expr
 exprParser = orExpr
 
--- OR tiene menor prioridad, por lo que es la estructura de nivel superior
+-- | OR tiene menor prioridad, por lo que es la estructura de nivel superior
 orExpr :: Parser Expr
 orExpr = chainl1 andExpr (try (string "OR") >> spaces >> return Or)
 
--- AND tiene mayor prioridad, por lo que se evalúa primero
+-- | AND tiene mayor prioridad, por lo que se evalúa primero
 andExpr :: Parser Expr
 andExpr = chainl1 term (try (string "AND") >> spaces >> return And)
 
--- Un término es una condición simple o una expresión entre paréntesis
+-- | Un término es una condición simple o una expresión entre paréntesis
 term :: Parser Expr
 term = do
     spaces
@@ -78,14 +77,14 @@ term = do
     return (Cond cond)
     <|> between (char '(' >> spaces) (spaces >> char ')') exprParser
 
--- Parser para palabras clave SQL como SELECT, FROM, WHERE
+-- | Parser para palabras clave SQL como SELECT, FROM, WHERE
 reserved :: String -> Parser String
 reserved word = do
     result <- try (string word)
     spaces
     return result
 
--- Parser para listas de columnas en SELECT
+-- | Parser para listas de columnas en SELECT
 -- Ejemplo: SELECT nombre, edad
 columnsParser :: Parser [String]
 columnsParser = do
@@ -95,7 +94,7 @@ columnsParser = do
     spaces -- Se asegura de consumir los espacios antes de "FROM"
     return cols
 
--- Definición manual de optionMaybe para compatibilidad con Hugs
+-- | Definición manual de optionMaybe para compatibilidad con Hugs
 optionMaybe :: Parser a -> Parser (Maybe a)
 optionMaybe p = do
     result <- option Nothing (do
@@ -103,7 +102,7 @@ optionMaybe p = do
         return (Just val))
     return result
 
--- Parser para la consulta completa con SELECT, FROM y WHERE opcional
+-- | Parser para la consulta completa con SELECT, FROM y WHERE opcional
 queryParser :: Parser Query
 queryParser = do
     reserved "SELECT"
@@ -116,7 +115,16 @@ queryParser = do
         exprParser)
     return (Query cols table wherePart)
 
--- Función para convertir una consulta desglosada a formato DOT
+-- | Función para convertir una consulta desglosada a formato DOT
+-- Esto permite visualizar la consulta en un grafo
+-- donde las conexiones reflejan las relaciones entre las cláusulas
+-- Ejemplo de salida:
+--   digraph Query {
+--     Query -> Table [label="FROM"];
+--     Table [label="usuarios"];
+--     Query -> nombre [label="SELECT"];
+--     Query -> Where [label="WHERE"];
+--   }
 toDot :: Query -> String
 toDot (Query fields table whereExpr) =
     unlines (
@@ -148,7 +156,6 @@ toDot (Query fields table whereExpr) =
             ++ exprToDot orNode l
             ++ exprToDot orNode r
 
-
--- Función principal de prueba
+-- | Función principal de prueba
 main :: IO ()
 main = parseTest queryParser "SELECT nombre FROM empleados WHERE edad > 25 AND departamento = Ventas OR salario > 5000 AND experiencia >= 5;"
