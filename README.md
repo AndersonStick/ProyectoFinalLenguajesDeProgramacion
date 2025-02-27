@@ -11,8 +11,7 @@ Este proyecto implementa un **parser para consultas tipo SQL-like** usando **Has
 ✅ **Soporte para operadores de comparación:** `=`, `>`, `<`, `>=`, `<=`, `!=`.  
 ✅ **Manejo de condiciones lógicas con `AND` y `OR` en la cláusula WHERE**.  
 ✅ **Generación de representación en formato DOT** para visualizar la consulta con Graphviz.  
-✅ **Pruebas unitarias implementadas con HUnit**.  
-✅ **Soporte completo para Hugs** con ajustes en el manejo de espacios y operadores.  
+✅ **Soporte completo para WinHugs** con ajustes en el manejo de espacios y operadores.  
 
 ---
 
@@ -20,13 +19,13 @@ Este proyecto implementa un **parser para consultas tipo SQL-like** usando **Has
 
 ```
 📁 ProyectoFinalLenguajesDeProgramacion  
+│── 📁 images                   # Carpeta para imágenes del proyecto  
+│── 📜 .gitignore                # Archivos ignorados en Git  
 │── 📜 README.md                 # Documentación principal del proyecto  
 │── 📜 analizador.hs              # Implementación del parser en Haskell  
-│── 📜 tests.hs                   # Pruebas unitarias con HUnit  
+│── 📜 tests.hs                   # Pruebas unitarias  
 │── 📜 presentacion.pptx          # Presentación del proyecto  
-│── 📜 main.tex                   # Documento técnico en LaTeX  
-│── 📜 output.dot                 # Representación DOT de consultas  
-│── 📁 ejemplos                   # Casos de prueba y ejemplos de consultas  
+│── 📜 Proyecto_Final_Lenguajes.pdf # Documento técnico en PDF  
 ```
 
 ---
@@ -35,9 +34,7 @@ Este proyecto implementa un **parser para consultas tipo SQL-like** usando **Has
 
 ### **🔹 Requisitos Previos**  
 Para ejecutar el parser, necesitas:  
-- **GHC (Glasgow Haskell Compiler)** o **Hugs**  
-- **Parsec** (si usas GHC, instálalo con `cabal install parsec`)  
-- **HUnit** (para pruebas, instala con `cabal install HUnit`)  
+- **WinHugs (Intérprete de Haskell para Windows)**  
 - **Graphviz** (opcional, para visualizar la representación DOT)  
 
 ### **🔹 Clonar el Repositorio**
@@ -46,16 +43,11 @@ git clone https://github.com/tu-usuario/ProyectoFinalLenguajesDeProgramacion.git
 cd ProyectoFinalLenguajesDeProgramacion
 ```
 
-### **🔹 Ejecutar el Parser en Haskell**  
-Para probar el parser con **Hugs** o **GHCi**, usa:  
+### **🔹 Ejecutar el Parser en Hugs**  
+Para probar el parser en **WinHugs**, usa:  
 ```haskell
 :load analizador.hs
 main
-```
-
-### **🔹 Ejecutar las Pruebas Unitarias**  
-```bash
-runhaskell tests.hs
 ```
 
 ---
@@ -64,7 +56,7 @@ runhaskell tests.hs
 
 **Consulta SQL-like de prueba:**  
 ```sql
-SELECT nombre, edad FROM usuarios WHERE edad > 30 AND ciudad = "Madrid"
+SELECT nombre, edad FROM usuarios WHERE edad > 30 AND ciudad = Madrid
 ```
 **Salida esperada en AST:**  
 ```haskell
@@ -131,3 +123,4 @@ dot -Tpng output.dot -o output.png
 
 ## 📜 Licencia  
 Este proyecto está bajo la licencia MIT. Puedes utilizarlo y modificarlo libremente.  
+```
