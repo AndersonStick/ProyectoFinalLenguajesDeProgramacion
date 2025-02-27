@@ -1,3 +1,5 @@
+module Analizador where
+
 import Text.ParserCombinators.Parsec
 
 -- Definición de los operadores de comparación
